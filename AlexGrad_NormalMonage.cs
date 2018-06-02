@@ -66,7 +66,7 @@ public class EntryPoint {
     //
     //
     string[] desiredTransitions = {"VEGAS Linear Wipe",
-    "VEGAS Page Peel", "VEGAS Iris", "VEGAS Portals", "VEGAS Push",
+    "VEGAS Page Peel", "VEGAS Iris", "VEGAS Push",
     "VEGAS Star Wipe"};
 
     Random rnd = new Random();
@@ -85,8 +85,6 @@ VideoTrack FindSelectedVideoTrack(Project project) {
 // Adds a given media fileName to the current track at the specified cursorPosition
 //
 void InsertFileAt(Vegas vegas, string fileName, Timecode cursorPosition) {
-  
-
 
     VideoEvent videoEvent = null;
 
@@ -129,7 +127,7 @@ void InsertFileAt(Vegas vegas, string fileName, Timecode cursorPosition) {
         for (int i=0;i<files.Length;i++)
         {
           InsertFileAt(vegas, files[i], s);
-          s=s+Timecode.FromSeconds(stillLength-overlap);
+          s=s + Timecode.FromSeconds(stillLength-overlap);
         }
 
       }
