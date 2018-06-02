@@ -38,13 +38,13 @@ public class EntryPoint {
     //
     // How long should each still event be
     //
-    const double stillLength=4.2;
+    const double stillLength=4.0;
 
     //
     // How much time should the 'next' still overlap the
     // previous still
     //
-    const double overlap=0.2;
+    const double overlap=0.25;
 
 
     //
@@ -63,6 +63,14 @@ public class EntryPoint {
     // 
     const string initialFolderRoot="J:\\AlexVideo\\SourcePics";
 
+    //
+    //
+    string[] desiredTransitions = {"VEGAS Linear Wipe",
+    "VEGAS Page Peel", "VEGAS Iris", "VEGAS Portals", "VEGAS Push",
+    "VEGAS Star Wipe"};
+
+    Random rnd = new Random();
+
 
 VideoTrack FindSelectedVideoTrack(Project project) {
     foreach (Track track in project.Tracks) {
@@ -77,9 +85,7 @@ VideoTrack FindSelectedVideoTrack(Project project) {
 // Adds a given media fileName to the current track at the specified cursorPosition
 //
 void InsertFileAt(Vegas vegas, string fileName, Timecode cursorPosition) {
-    PlugInNode plugIn = vegas.Transitions.FindChildByName("VEGAS Linear Wipe");
-
-    Random rnd = new Random();
+  
 
 
     VideoEvent videoEvent = null;
@@ -97,6 +103,7 @@ void InsertFileAt(Vegas vegas, string fileName, Timecode cursorPosition) {
     key0.RotateBy(initialRotationRadians * (double)rnd.Next(-1,1));
     key0.MoveBy(new VideoMotionVertex((float)rnd.Next(-15,15), (float)rnd.Next(-20,20)));
 
+    PlugInNode plugIn = vegas.Transitions.FindChildByName(desiredTransitions[rnd.Next(0,desiredTransitions.Length-1)]);
 
     Effect fx = new Effect(plugIn);
     videoEvent.FadeIn.Transition=fx;
@@ -109,7 +116,8 @@ void InsertFileAt(Vegas vegas, string fileName, Timecode cursorPosition) {
   // calling a script
   //
   public void FromVegas (Vegas vegas) {
-      double s=0.0;
+
+      Timecode s = vegas.Transport.CursorPosition;
     
       FolderBrowserDialog folderBrowserDialog1 = new FolderBrowserDialog();
       folderBrowserDialog1.SelectedPath=initialFolderRoot;
@@ -120,8 +128,8 @@ void InsertFileAt(Vegas vegas, string fileName, Timecode cursorPosition) {
         string[] files = Directory.GetFiles(folderBrowserDialog1.SelectedPath);
         for (int i=0;i<files.Length;i++)
         {
-          InsertFileAt(vegas, files[i], Timecode.FromSeconds(s));
-          s=s+(stillLength-overlap);
+          InsertFileAt(vegas, files[i], s);
+          s=s+Timecode.FromSeconds(stillLength-overlap);
         }
 
       }
