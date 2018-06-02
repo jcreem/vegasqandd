@@ -18,34 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using ScriptPortal.Vegas;
-using System;
-using System.IO;
-using System.Collections;
 
 //
 // This script populates the currently selected track (which is naively assumed 
 // to be a a video track) with all of the stills from specific folder
-// with a quick flipping transition effect and some pan/zoom/rotate that
-// approximates some of the flicker/flipping of pictures
-// at the start of a Marvel movie
+// with a moderate pace pan/zoom/flip with a little bit of randomness on the
+// rotation and panning.
 //
+
+using ScriptPortal.Vegas;
+using System;
+using System.IO;
+using System.Collections;
+using System.Windows.Forms;
+
+
 public class EntryPoint {
 
     //
     // How long should each still event be
     //
-    const double stillLength=0.166667;
+    const double stillLength=4.2;
+
     //
     // How much time should the 'next' still overlap the
     // previous still
     //
-    const double overlap=0.0666667;
+    const double overlap=0.2;
 
-    //
-    // Where are the stills
-    //
-    const string StillsPath="J:\\AlexVideo\\TitleIntro";
 
     //
     // Start each still scaled by this (and as we progress forward
@@ -57,13 +57,13 @@ public class EntryPoint {
     // Start each still rotated by initialRotationRadians and
     // return to unrotated as we progress forward
     //
-    const double initialRotationRadians=-0.0523599;
+    const double initialRotationRadians=0.0523599;
+
+    //
+    // 
+    const string initialFolderRoot="J:\\AlexVideo\\SourcePics";
 
 
-//
-// Returns the currently selected video track. If no video track
-// is currently selected, returns null
-//
 VideoTrack FindSelectedVideoTrack(Project project) {
     foreach (Track track in project.Tracks) {
         if (track.Selected & (track.MediaType == MediaType.Video)) {
@@ -73,12 +73,14 @@ VideoTrack FindSelectedVideoTrack(Project project) {
     return null;
 }
 
-
 //
 // Adds a given media fileName to the current track at the specified cursorPosition
 //
 void InsertFileAt(Vegas vegas, string fileName, Timecode cursorPosition) {
     PlugInNode plugIn = vegas.Transitions.FindChildByName("VEGAS Linear Wipe");
+
+    Random rnd = new Random();
+
 
     VideoEvent videoEvent = null;
 
@@ -92,12 +94,13 @@ void InsertFileAt(Vegas vegas, string fileName, Timecode cursorPosition) {
     videoEvent.VideoMotion.Keyframes.Add(key1);
     VideoMotionKeyframe key0 = videoEvent.VideoMotion.Keyframes[0];
     key0.ScaleBy(new VideoMotionVertex(initialScale, initialScale));
-    key0.RotateBy(initialRotationRadians);
+    key0.RotateBy(initialRotationRadians * (double)rnd.Next(-1,1));
+    key0.MoveBy(new VideoMotionVertex((float)rnd.Next(-15,15), (float)rnd.Next(-20,20)));
 
 
     Effect fx = new Effect(plugIn);
     videoEvent.FadeIn.Transition=fx;
-    fx.Preset="Top-Down, Soft Edge";
+
 }
 
 
@@ -107,14 +110,20 @@ void InsertFileAt(Vegas vegas, string fileName, Timecode cursorPosition) {
   //
   public void FromVegas (Vegas vegas) {
       double s=0.0;
-      
-      //  Gran the media and insert it
+    
+      FolderBrowserDialog folderBrowserDialog1 = new FolderBrowserDialog();
+      folderBrowserDialog1.SelectedPath=initialFolderRoot;
+      DialogResult result=folderBrowserDialog1.ShowDialog();
 
-      string[] files = Directory.GetFiles(StillsPath);
-      for (int i=0;i<files.Length;i++)
+      if (result == DialogResult.OK)
       {
+        string[] files = Directory.GetFiles(folderBrowserDialog1.SelectedPath);
+        for (int i=0;i<files.Length;i++)
+        {
           InsertFileAt(vegas, files[i], Timecode.FromSeconds(s));
           s=s+(stillLength-overlap);
+        }
+
       }
   }
 }
